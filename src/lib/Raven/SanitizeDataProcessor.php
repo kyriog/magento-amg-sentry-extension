@@ -7,38 +7,31 @@
  */
 class Raven_SanitizeDataProcessor extends Raven_Processor
 {
-    const MASK = '********';
-    const FIELDS_RE = '/(authorization|password|passwd|secret)/i';
-    const VALUES_RE = '/^\d{16}$/';
+    static $mask = '********';
+    static $fields_re = '/(authorization|password|passwd|secret|password_confirmation|card_number)/i';
+    static $values_re = '/^(?:\d[ -]*?){13,16}$/';
 
-    function apply($value, $fn, $key=null) {
-        if (is_array($value)) {
-            foreach ($value as $k=>$v) {
-                $value[$k] = $this->apply($v, $fn, $k);
-            }
-            return $value;
-        }
-        return call_user_func($fn, $key, $value);
-    }
-
-    function sanitize($key, $value)
+    public function sanitize(&$item, $key)
     {
-        if (empty($value)) {
-            return $value;
+        if (empty($item)) {
+            return;
         }
 
-        if (preg_match(self::VALUES_RE, $value)) {
-            return self::MASK;
+        if (preg_match(self::$values_re, $item)) {
+            $item = self::$mask;
         }
 
-        if (preg_match(self::FIELDS_RE, $key)) {
-            return self::MASK;
+        if (empty($key)) {
+            return;
         }
 
-        return $value;
+        if (preg_match(self::$fields_re, $key)) {
+            $item = self::$mask;
+        }
     }
 
-    function process($data) {
-        return $this->apply($data, array($this, 'sanitize'));
+    public function process(&$data)
+    {
+        array_walk_recursive($data, array($this, 'sanitize'));
     }
 }

@@ -6,16 +6,15 @@
  */
 class Raven_Processor
 {
-    function __construct($client)
+    public function __construct(Raven_Client $client)
     {
         $this->client = $client;
     }
 
-    /** 
-     * Process data and return updated message.
+    /**
+     * Process and sanitize data, modifying the existing value if necessary.
      */
-    public function process($data)
+    public function process(&$data)
     {
-        return $data;
     }
 }

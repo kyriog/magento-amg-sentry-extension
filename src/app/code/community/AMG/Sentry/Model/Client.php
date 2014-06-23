@@ -3,82 +3,37 @@
 $ravenDir = Mage::getBaseDir() . DS . 'lib' . DS . 'Raven';
 require_once($ravenDir . DS . 'Autoloader.php');
 Raven_Autoloader::register();
-//require_once($ravenDir . DS . 'Compat.php');
-//require_once($ravenDir . DS . 'ErrorHandler.php');
-//require_once($ravenDir . DS . 'Stacktrace.php');
 
 class AMG_Sentry_Model_Client extends Raven_Client {
 
-	static protected $_logger = null;
-
     function __construct() {
-        parent::__construct(Mage::getStoreConfig('dev/amg-sentry/dsn'));
+        $logger = Mage::getStoreConfig('dev/amg-sentry/logger');
+
+        return parent::__construct(
+            Mage::getStoreConfig('dev/amg-sentry/dsn'),
+            array('logger' => $logger)
+        );
     }
 
-	/**
-	* Send a message to Sentry.
-	*
-	* @param string $title Message title
-	* @param string $description Message description
-	* @param string $level Message level
-	*
-	* @return integer Sentry event ID 
-	*/
-	public function sendMessage($title, $description = '', $level = self::INFO){
-		return $this->captureMessage($title, array('description' => $description), $level);
-	}
+    /**
+     * Get customer email.
+     *
+     * @return string Emailaddress
+     */
+    public function getCustomerEmail()
+    {
+        $customer = Mage::getSingleton('customer/session')->getCustomer();
+        return $customer->getEmail();
+    }
 
-	/**
-	* Send an exception to Sentry.
-	*
-	* @param Exception $exception Exception
-	* @param string $description Exception description
-	*
-	* @return integer Sentry event ID 
-	*/
-	public function sendException($exception, $description = ''){
-		return $this->captureException($exception, $description);
-	}
+    public function get_user_data(){
+        $data = parent::get_user_data();
+        $email = $this->getCustomerEmail();
 
-	/**
-    * Log a message to sentry
-    */
-	public function capture($data, $stack){
-		if (!Mage::getStoreConfigFlag('dev/amg-sentry/active')) {
-			return true;
-		}
-		if (!empty($data['sentry.interfaces.Message']['params']['description'])) {
-			$data['culprit'] = $data['message'];
-			$data['message'] = $data['sentry.interfaces.Message']['params']['description'];
-			unset($data['sentry.interfaces.Message']['params']['description']);
-		}
-		if (!empty($data['sentry.interfaces.Exception']['value'])) {
-			$data['message'] = $data['culprit'];
-			$data['culprit'] = $data['sentry.interfaces.Exception']['value'];
-		}
-		if (!isset($data['logger'])) {
-			if (null !== self::$_logger) {
-				$data['logger'] = self::$_logger;
-			} else {
-				$data['logger'] = Mage::getStoreConfig('dev/amg-sentry/logger');
-			}
-		}
-		return parent::capture($data, $stack);
-	}
+        reset($data);
+        $k = key($data);
 
-	/**
-	* Set Sentry logger.
-	*
-	* @param string $logger Logger
-	*/
-	public function setLogger($logger){
-		$this->_logger = $logger;
-	}
-	/**
-	* Reset Sentry logger.
-	*/
-	public function resetLogger(){
-		$this->_logger = null;
-	}
-
+        $data[$k]['email'] = $email;
+        return $data;
+    }
 }

@@ -4,19 +4,26 @@ class AMG_Sentry_Model_Observer {
 
     public function initSentryLogger($observer){
         if (Mage::getStoreConfigFlag('dev/amg-sentry/active')) {
-            require_once(dirname(__FILE__) . DS . '..' . DS . 'functions.php');
-            Mage::app()->setErrorHandler('sentry_error_handler');
+            // Instantiate a new client
+            $client = Mage::getSingleton('amg-sentry/client');
 
-            $php_error_handler = new Raven_ErrorHandler(Mage::getSingleton('amg-sentry/client'));
+            // Install error handlers and shutdown function to catch fatal errors
+            $error_handler = new Raven_ErrorHandler($client);
+
+            // Check if we should log errors, warnings etc.
             if (Mage::getStoreConfigFlag('dev/amg-sentry/php-errors')) {
-                set_error_handler(array($php_error_handler, 'handleError'));
+                $error_handler->registerErrorHandler();
             }
 
+            // Check if we should log exceptions
             if (Mage::getStoreConfigFlag('dev/amg-sentry/php-exceptions')) {
-                set_exception_handler(array($php_error_handler, 'handleException'));
+                $error_handler->registerExceptionHandler();
+            }
+
+            // Check if we should log fatal errors
+            if (Mage::getStoreConfigFlag('dev/amg-sentry/php-fatal-errors')) {
+                $error_handler->registerShutdownFunction();
             }
         }
     }
-
 }
-

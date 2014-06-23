@@ -1,8 +1,10 @@
 # magento-amg-sentry-extension
 
-The `magento-amg-sentry-extension` is a Magento 1.5 extension for Sentry interface.
+The `magento-amg-sentry-extension` is a Magento 1.5 extension for Sentry
+interface.
 
-This plugin is based on Raven client library [raven-php](https://github.com/getsentry/raven-php).
+This plugin is based on Raven client library
+[raven-php](https://github.com/getsentry/raven-php).
 
 ## Requirements
 
@@ -12,10 +14,18 @@ This plugin is based on Raven client library [raven-php](https://github.com/gets
 
 ## Installation (via zip archive)
 
-[Download](https://github.com/amg-dev/magento-amg-sentry-extension/archive/master.zip) and extract zip archive.
+[Download](../../archive/master.zip) and extract zip archive.
 
 Copy the content of `src` folder into your Magento project folder.
 
-### Configuration
+## Installation (via modman)
 
-In your Magento back-office, go to System → Configuration → Advanced → Developer → AMG Sentry.
+``` bash
+modman init modman clone
+git@github.com:wearefarm/magento-sentry-extension.git
+```
+
+## Configuration
+
+In your Magento back-office, go to System → Configuration → Advanced → Developer
+→ AMG Sentry.

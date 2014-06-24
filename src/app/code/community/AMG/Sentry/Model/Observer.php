@@ -40,8 +40,10 @@ class AMG_Sentry_Model_Observer {
 
     public function mageRunException($observer)
     {
-        $exception = $observer->getException();
-        $this->error_handler->handleException($exception);
+        if ($error_handler = $this->error_handler) {
+            $exception = $observer->getException();
+            $error_handler->handleException($exception);
+        }
         return $this;
     }
 }

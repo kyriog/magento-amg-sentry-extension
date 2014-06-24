@@ -25,6 +25,31 @@ modman init modman clone
 git@github.com:wearefarm/magento-sentry-extension.git
 ```
 
+## Installation: enabling Magento Exception handling
+
+Because Magento catches all exceptions via a global try/catch construct
+`set_exception_handler` doesn't work (the exception handler is never reached).
+With a small addition to `app/Mage.php` this can be fixed:
+
+``` php
+  public static function run($code = '', $type = 'store', $options = array())
+  {
+    ......
+    } catch (Exception $e) {
+    if (self::isInstalled() || self::$_isDownloader) {
+    //add this line
+    self::dispatchEvent('mage_run_exception',array('exception' => $e));
+    //-----------------------------------------------------------------
+    self::printException($e);
+    exit();
+    }
+  }
+```
+
+I hope Magento will include this patch in Magento. Another solution could be
+[PHP's runkit](http://www.php.net/manual/en/book.runkit.php) or editing
+`errors/report.php`.
+
 ## Configuration
 
 In your Magento back-office, go to System → Configuration → Advanced → Developer

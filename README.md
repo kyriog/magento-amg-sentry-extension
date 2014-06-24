@@ -50,6 +50,9 @@ I hope Magento will include this patch in Magento. Another solution could be
 [PHP's runkit](http://www.php.net/manual/en/book.runkit.php) or editing
 `errors/report.php`.
 
+[Overwriting Magento's built in
+logger](https://stackoverflow.com/questions/11551748/how-do-you-customize-the-log-directory/11551749#11551749) could be another option.
+
 ## Configuration
 
 In your Magento back-office, go to System → Configuration → Advanced → Developer

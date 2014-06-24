@@ -35,7 +35,6 @@
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
-                            <comment>In the form of: http(s)://public:secret@sentry.example.com:9000/[PROJECT_ID]</comment>
                         </active>
                         <dsn>
                             <label>DSN</label>
@@ -44,6 +43,7 @@
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
+                            <comment>In the form of: http(s)://public:secret@sentry.example.com:9000/[PROJECT_ID]</comment>
                         </dsn>
                         <logger>
                             <label>Logger</label>

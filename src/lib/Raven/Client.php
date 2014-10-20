@@ -16,7 +16,7 @@
 
 class Raven_Client
 {
-    const VERSION = '0.9.0';
+    const VERSION = '0.10.0';
     const PROTOCOL = '5';
 
     const DEBUG = 'debug';
@@ -64,8 +64,9 @@ class Raven_Client
         $this->http_proxy = Raven_Util::get($options, 'http_proxy');
         $this->extra_data = Raven_Util::get($options, 'extra', array());
         $this->send_callback = Raven_Util::get($options, 'send_callback', null);
-        $this->curl_method = Raven_Util::get($options, 'curl_method', 'async');
+        $this->curl_method = Raven_Util::get($options, 'curl_method', 'sync');
         $this->curl_path = Raven_Util::get($options, 'curl_path', 'curl');
+        $this->ca_cert = Raven_util::get($options, 'ca_cert', $this->get_default_ca_cert());
 
         $this->processors = array();
         foreach (Raven_util::get($options, 'processors', self::getDefaultProcessors()) as $processor) {
@@ -218,21 +219,22 @@ class Raven_Client
             $message = '<unknown exception>';
         }
 
+        $exc = $exception;
         do {
             $exc_data = array(
-                'value' => $exception->getMessage(),
-                'type' => get_class($exception),
-                'module' => $exception->getFile() .':'. $exception->getLine(),
+                'value' => $exc->getMessage(),
+                'type' => get_class($exc),
+                'module' => $exc->getFile() .':'. $exc->getLine(),
             );
 
             /**'sentry.interfaces.Exception'
              * Exception::getTrace doesn't store the point at where the exception
              * was thrown, so we have to stuff it in ourselves. Ugh.
              */
-            $trace = $exception->getTrace();
+            $trace = $exc->getTrace();
             $frame_where_exception_thrown = array(
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
+                'file' => $exc->getFile(),
+                'line' => $exc->getLine(),
             );
 
             array_unshift($trace, $frame_where_exception_thrown);
@@ -248,7 +250,7 @@ class Raven_Client
 
             $exceptions[] = $exc_data;
 
-        } while ($has_chained_exceptions && $exception = $exception->getPrevious());
+        } while ($has_chained_exceptions && $exc = $exc->getPrevious());
 
         $data['message'] = $message;
         $data['sentry.interfaces.Exception'] = array(
@@ -379,6 +381,10 @@ class Raven_Client
         if (!isset($data['tags'])) $data['tags'] = array();
         if (!isset($data['extra'])) $data['extra'] = array();
         if (!isset($data['event_id'])) $data['event_id'] = $this->uuid4();
+
+        if (isset($data['message'])) {
+            $data['message'] = substr($data['message'], 0, 1024);
+        }
 
         $data = array_merge($this->get_default_data(), $data);
 
@@ -519,11 +525,18 @@ class Raven_Client
         return true;
     }
 
-    private function get_curl_options(){
+    protected function get_default_ca_cert() {
+        return dirname(__FILE__) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'cacert.pem';
+    }
+
+    protected function get_curl_options()
+    {
         $options = array(
             CURLOPT_VERBOSE => false,
             CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_CAINFO => $this->ca_cert,
+            CURLOPT_USERAGENT => 'raven-php/' . self::VERSION,
         );
         if ($this->http_proxy) {
             $options[CURLOPT_PROXY] = $this->http_proxy;
@@ -550,13 +563,14 @@ class Raven_Client
         if ($this->curl_method == 'async') {
             $this->_curl_handler->enqueue($url, $data, $headers);
         } elseif ($this->curl_method == 'exec') {
-            $this->send_http_asynchronous_exec($url, $data, $headers);
+            $this->send_http_asynchronous_curl_exec($url, $data, $headers);
         } else {
             $this->send_http_synchronous($url, $data, $headers);
         }
     }
 
     private function send_http_asynchronous_curl_exec($url, $data, $headers) {
+        // TODO(dcramer): support ca_cert
         $cmd = $this->curl_path.' -X POST ';
         foreach ($headers as $key => $value) {
             $cmd .= '-H \''. $key. ': '. $value. '\' ';
@@ -585,9 +599,19 @@ class Raven_Client
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 
         $options = $this->get_curl_options();
+        $ca_cert = $options[CURLOPT_CAINFO];
+        unset($options[CURLOPT_CAINFO]);
         curl_setopt_array($curl, $options);
 
         curl_exec($curl);
+
+        $errno = curl_errno($curl);
+        // CURLE_SSL_CACERT || CURLE_SSL_CACERT_BADFILE
+        if ($errno == 60 || $errno == 77) {
+            curl_setopt($curl, CURLOPT_CAINFO, $ca_cert);
+            curl_exec($curl);
+        }
+
         $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         $success = ($code == 200);
         if (!$success) {

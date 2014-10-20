@@ -14,9 +14,10 @@
  * @package raven
  */
 
+// TODO(dcramer): handle ca_cert
 class Raven_CurlHandler
 {
-	private $join_timeout;
+    private $join_timeout;
     private $multi_handle;
     private $options;
     private $requests;

@@ -7,12 +7,14 @@ Raven_Autoloader::register();
 class AMG_Sentry_Model_Client extends Raven_Client {
 
     function __construct() {
-        $logger = Mage::getStoreConfig('dev/amg-sentry/logger');
+        $options = array('logger' => Mage::getStoreConfig('dev/amg-sentry/logger'));
 
-        return parent::__construct(
-            Mage::getStoreConfig('dev/amg-sentry/dsn'),
-            array('logger' => $logger)
-        );
+        $cacert = trim(Mage::getStoreConfig('dev/amg-sentry/cacert'));
+        if($cacert) {
+            $options['ca_cert'] = Mage::getBaseDir() . DS . $cacert;
+        }
+
+        return parent::__construct(Mage::getStoreConfig('dev/amg-sentry/dsn'), $options);
     }
 
     /**

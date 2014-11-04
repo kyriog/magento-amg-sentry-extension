@@ -45,6 +45,15 @@
                             <show_in_store>1</show_in_store>
                             <comment>In the form of: http(s)://public:secret@sentry.example.com:9000/[PROJECT_ID]</comment>
                         </dsn>
+                        <cacert>
+                            <label>Certificate Authority root path</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>25</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <comment>From Magento root directory. If empty, uses default raven-php cacerts.</comment>
+                        </cacert>
                         <logger>
                             <label>Logger</label>
                             <frontend_type>text</frontend_type>

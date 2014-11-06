@@ -5,6 +5,7 @@ require_once($ravenDir . DS . 'Autoloader.php');
 Raven_Autoloader::register();
 
 class AMG_Sentry_Model_Client extends Raven_Client {
+    private $userData = array();
 
     function __construct() {
         $options = array('logger' => Mage::getStoreConfig('dev/amg-sentry/logger'));
@@ -28,6 +29,12 @@ class AMG_Sentry_Model_Client extends Raven_Client {
         return $customer->getEmail();
     }
 
+    public function setUserData($key, $value)
+    {
+        $this->userData[$key] = $value;
+        return $this;
+    }
+
     public function get_user_data(){
         $data = parent::get_user_data();
         $email = $this->getCustomerEmail();
@@ -36,6 +43,12 @@ class AMG_Sentry_Model_Client extends Raven_Client {
         $k = key($data);
 
         $data[$k]['email'] = $email;
+
+        foreach($this->userData as $key => $value)
+        {
+            $data[$k][$key] = $value;
+        }
+
         return $data;
     }
 }

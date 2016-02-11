@@ -8,7 +8,10 @@ class AMG_Sentry_Model_Client extends Raven_Client {
     private $userData = array();
 
     function __construct() {
-        $options = array('logger' => Mage::getStoreConfig('dev/amg-sentry/logger'));
+        $options = array(
+            'logger' => Mage::getStoreConfig('dev/amg-sentry/logger'),
+            'release' => (string) Mage::getConfig()->getNode('global/version'),
+        );
 
         $cacert = trim(Mage::getStoreConfig('dev/amg-sentry/cacert'));
         if($cacert) {

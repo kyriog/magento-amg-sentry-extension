@@ -45,11 +45,11 @@ class AMG_Sentry_Model_Client extends Raven_Client {
         reset($data);
         $k = key($data);
 
-        $data[$k]['email'] = $email;
+        $data[$k]['data']['email'] = $email;
 
         foreach($this->userData as $key => $value)
         {
-            $data[$k][$key] = $value;
+            $data[$k]['data'][$key] = $value;
         }
 
         return $data;
